@@ -12,13 +12,17 @@ def auditar_codigo():
     print("[Módulo 1] Auditoría de Despliegue (Vercel/GitHub/Firebase)")
     print("Conectando en tiempo real con:")
     print(" 🌐 Vercel: the-barber-shop.vercel.app")
-    print(" 📂 GitHub: ricardodevcorex99/the-barber-shop")
-    print(" 🔥 Firebase: the-barber-shop-c623b\n")
+    print(" 📂 Cerberus AI - Auditor Semántico (Open Source)")
+    print(" 🔥 Listo para escanear repositorios\n")
     
-    github_url = "https://raw.githubusercontent.com/ricardodevcorex99/the-barber-shop/refs/heads/main/chatbot.js"
+    github_url = input("Ingresa la URL Raw del archivo a auditar (ej. https://raw.github...): ").strip()
     
+    if not github_url:
+        print("❌ Operación cancelada. Debes ingresar una URL válida.")
+        return
+        
     try:
-        print("[*] Descargando código frontend (chatbot.js) desde GitHub (Vinculado a Vercel)...")
+        print(f"[*] Descargando código fuente desde GitHub...")
         respuesta_git = requests.get(github_url)
         
         if respuesta_git.status_code == 200:
@@ -29,13 +33,14 @@ def auditar_codigo():
             print("[*] Pasando el código por la Inteligencia Artificial (Auditor OWASP)...")
             time.sleep(1) 
             
-            prompt = """Eres un Auditor Jefe de Ciberseguridad experto en OWASP.
-Analiza de forma CRUDA, OBJETIVA y TÉCNICA el siguiente código fuente del frontend (`chatbot.js`).
+            nombre_archivo = github_url.split('/')[-1]
+            prompt = f"""Eres un Auditor Jefe de Ciberseguridad experto en OWASP.
+Analiza de forma CRUDA, OBJETIVA y TÉCNICA el siguiente código fuente (`{nombre_archivo}`).
 Tu trabajo es detectar vulnerabilidades reales (Ej. Exposición de secretos, Inyección de código, Inyección de Prompt, fallos de configuración, etc.).
 No asumas vulnerabilidades que no existen, pero si encuentras una, detállala con máxima severidad.
 
 Genera el reporte con esta estructura exacta:
-1. 🎯 ARCHIVO ANALIZADO: the-barber-shop/chatbot.js
+1. 🎯 ARCHIVO ANALIZADO: {nombre_archivo}
 2. 🚨 RESULTADO DE AUDITORÍA: Detalla las vulnerabilidades encontradas (si las hay) o explica por qué la arquitectura actual es segura.
 3. 💉 ANÁLISIS DE VECTORES DE ATAQUE: Explica cómo un atacante podría explotar el código actual (o por qué no podría hacerlo).
 4. 🛡️ PLAN DE REMEDIACIÓN: Pasos técnicos para solucionar los fallos encontrados (si aplica).
