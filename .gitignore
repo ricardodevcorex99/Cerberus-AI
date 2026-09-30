@@ -1,0 +1,14 @@
+# Ignorar entornos virtuales y caches
+__pycache__/
+*.pyc
+venv/
+env/
+
+# Ignorar base de datos de incidentes para que no se suban los logs al repo público
+data/incidentes.json
+
+# CRÍTICO: NUNCA SUBIR EL .env REAL A GITHUB
+.env
+
+# Credenciales de Firebase
+firebase-key.json

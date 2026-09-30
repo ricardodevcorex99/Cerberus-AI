@@ -1,0 +1,38 @@
+[
+    {
+        "folio": "TBS-10023",
+        "name": "Juan Perez",
+        "phone": "0981234567",
+        "email": "juanperez@gmail.com",
+        "date": "2026-08-25",
+        "barber": "Douglas",
+        "services": ["Corte de Cabello General"]
+    },
+    {
+        "folio": "TBS-99999",
+        "name": "Batman",
+        "phone": "0000000000",
+        "email": "asdfghjkl@fake.com",
+        "date": "2026-08-25",
+        "barber": "Cristopher",
+        "services": ["Corte de Cabello General", "Tinte"]
+    },
+    {
+        "folio": "TBS-66666",
+        "name": "DROP TABLE users;",
+        "phone": "1234567890",
+        "email": "hacker@anon.com",
+        "date": "2026-08-26",
+        "barber": "Sin preferencia",
+        "services": ["Perfilado de Barba"]
+    },
+    {
+        "folio": "TBS-10045",
+        "name": "Carlos Mendoza",
+        "phone": "0998765432",
+        "email": "cmendoza@empresa.com",
+        "date": "2026-08-27",
+        "barber": "Douglas",
+        "services": ["Corte y Barba"]
+    }
+]

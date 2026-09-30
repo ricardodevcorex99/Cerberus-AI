@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cerberus SIEM Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { background-color: #0f172a; color: #f8fafc; font-family: 'Inter', sans-serif; }
+        .glass-panel { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
+    </style>
+</head>
+<body class="p-8">
+    <div class="max-w-6xl mx-auto">
+        <header class="mb-8 flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-cyan-400">🛡️ CERBERUS SECURITY HACKER AI</h1>
+                <p class="text-gray-400">Security Information and Event Management (SIEM) - Live Dashboard</p>
+            </div>
+            <div class="text-right">
+                <span class="inline-block w-3 h-3 bg-green-500 rounded-full animate-pulse mr-2"></span>
+                <span class="text-green-500 font-mono">SISTEMA ACTIVO</span>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="glass-panel p-6 rounded-xl text-center">
+                <h3 class="text-gray-400 text-sm font-bold tracking-wider mb-2">INCIDENTES TOTALES</h3>
+                <p class="text-4xl font-bold" id="total-incidents">0</p>
+            </div>
+            <div class="glass-panel p-6 rounded-xl text-center border-b-4 border-red-500">
+                <h3 class="text-gray-400 text-sm font-bold tracking-wider mb-2">AMENAZAS CRÍTICAS</h3>
+                <p class="text-4xl font-bold text-red-500" id="critical-incidents">0</p>
+            </div>
+            <div class="glass-panel p-6 rounded-xl text-center border-b-4 border-yellow-500">
+                <h3 class="text-gray-400 text-sm font-bold tracking-wider mb-2">ADVERTENCIAS (ALTA)</h3>
+                <p class="text-4xl font-bold text-yellow-500" id="high-incidents">0</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <div class="glass-panel p-6 rounded-xl">
+                <h2 class="text-xl font-bold mb-4 border-b border-gray-700 pb-2">Distribución por Severidad</h2>
+                <canvas id="severityChart"></canvas>
+            </div>
+            <div class="glass-panel p-6 rounded-xl">
+                <h2 class="text-xl font-bold mb-4 border-b border-gray-700 pb-2">Últimos Incidentes Detectados</h2>
+                <div class="overflow-y-auto max-h-[300px] pr-2" id="incidents-list">
+                    <!-- Dynamic List -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let chartInstance = null;
+
+        async function fetchData() {
+            try {
+                const response = await fetch('/api/incidentes');
+                const data = await response.json();
+                updateDashboard(data);
+            } catch (e) {
+                console.error("Error fetching data", e);
+            }
+        }
+
+        function updateDashboard(data) {
+            document.getElementById('total-incidents').textContent = data.length;
+            
+            let critical = 0, high = 0, medium = 0, low = 0;
+            
+            const listDiv = document.getElementById('incidents-list');
+            listDiv.innerHTML = '';
+            
+            // Reversa para mostrar los más nuevos primero
+            const reversedData = [...data].reverse();
+
+            reversedData.forEach(inc => {
+                if(inc.severidad === 'CRÍTICA') critical++;
+                else if(inc.severidad === 'ALTA') high++;
+                else if(inc.severidad === 'MEDIO') medium++;
+                else low++;
+
+                let color = "text-gray-400";
+                if(inc.severidad === 'CRÍTICA') color = "text-red-500";
+                if(inc.severidad === 'ALTA') color = "text-yellow-500";
+
+                const div = document.createElement('div');
+                div.className = "mb-4 bg-gray-800 p-4 rounded-lg border border-gray-700";
+                
+                const headerDiv = document.createElement('div');
+                headerDiv.className = "flex justify-between items-start mb-2";
+                
+                const spanDate = document.createElement('span');
+                spanDate.className = "font-mono text-xs text-gray-500";
+                spanDate.textContent = inc.fecha;
+                
+                const spanSev = document.createElement('span');
+                spanSev.className = `font-bold text-xs px-2 py-1 bg-gray-900 rounded ${color}`;
+                spanSev.textContent = inc.severidad;
+                
+                headerDiv.appendChild(spanDate);
+                headerDiv.appendChild(spanSev);
+                
+                const h4 = document.createElement('h4');
+                h4.className = "font-bold text-cyan-300";
+                h4.textContent = inc.modulo;
+                
+                const p = document.createElement('p');
+                p.className = "text-sm text-gray-400 mt-1 whitespace-pre-wrap";
+                p.textContent = inc.detalle;
+                
+                div.appendChild(headerDiv);
+                div.appendChild(h4);
+                div.appendChild(p);
+                
+                listDiv.appendChild(div);
+            });
+
+            document.getElementById('critical-incidents').textContent = critical;
+            document.getElementById('high-incidents').textContent = high;
+
+            updateChart(critical, high, medium, low);
+        }
+
+        function updateChart(critical, high, medium, low) {
+            const ctx = document.getElementById('severityChart').getContext('2d');
+            if (chartInstance) chartInstance.destroy();
+            
+            chartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Crítica', 'Alta', 'Medio', 'Baja'],
+                    datasets: [{
+                        data: [critical, high, medium, low],
+                        backgroundColor: ['#ef4444', '#eab308', '#3b82f6', '#22c55e'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { color: '#f8fafc' } }
+                    }
+                }
+            });
+        }
+
+        // Auto-refresh every 5 seconds
+        setInterval(fetchData, 5000);
+        fetchData();
+    </script>
+</body>
+</html>
