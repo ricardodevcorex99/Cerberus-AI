@@ -65,5 +65,24 @@ Cerberus AI incluye un **Dashboard de Gestión de Incidentes** (Módulo 4). Todo
 - 🟡 **ALTO** (7 - 8)
 - 🔴 **CRÍTICO** (9 - 10)
 
+---
+
+## 💡 Recomendaciones y Casos Específicos
+
+Dado que Cerberus AI es una herramienta de terminal agnóstica (funciona en múltiples plataformas), ten en cuenta las siguientes consideraciones según tu entorno:
+
+### 1. Usuarios de Termux (Android)
+- **Manejo de Sesiones:** Asegúrate de otorgar permisos de almacenamiento a Termux (`termux-setup-storage`) si deseas que Cerberus lea bases de datos locales (`reservas_db.json`) fuera de su carpeta principal.
+- **Rendimiento:** Termux puede cerrar procesos en segundo plano para ahorrar batería. Al ejecutar el Módulo 1 (Auditor), mantén la pantalla encendida para evitar que Android corte la conexión con la API de Google Gemini por "Time Out".
+
+### 2. Cuotas de la API de Google Gemini (Error 429 / 503)
+- **Caso Específico:** Si auditas archivos gigantescos o realizas múltiples peticiones rápidas, podrías encontrarte con un Error `429 (Resource Exhausted)`. 
+- **Solución Integradada:** Cerberus tiene un sistema de **enfriamiento automático (Retry Loop)**. Si los servidores de Google se saturan, el programa pausará su ejecución durante 30 segundos y lo intentará de nuevo. ¡No canceles el script, simplemente espera!
+
+### 3. Modo de Auditoría Estricta (Enterprise)
+- El Módulo 1 está programado bajo un framework de *Zero Trust*. Asume vulnerabilidades por defecto a menos que se demuestre una arquitectura segura (Ej. Vercel Serverless Functions). Si obtienes un `9/10`, no te asustes; Cerberus es intencionalmente estricto para forzar las mejores prácticas de DevSecOps.
+
+---
+
 ## 🤝 Contribución
 ¡Cerberus AI es de código abierto! Siéntete libre de hacer un *Fork*, mejorar los módulos y enviar un *Pull Request*. 
