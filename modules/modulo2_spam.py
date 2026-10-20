@@ -2,157 +2,182 @@ import json
 import time
 import os
 import re
-import urllib.request
-import urllib.error
-from core.ai_engine import analizar_con_ia
+from core.ai_engine import analizar_con_ia, load_env_file
 from core.dashboard import guardar_incidente
 
-from dotenv import load_dotenv
-load_dotenv()
-API_KEY = os.getenv("FIREBASE_API_KEY")
-PROJECT_ID = "the-barber-shop-c623b"
+# ========================================================
+# REGLAS HEURÍSTICAS DE CERBERUS (NIVEL 1 DE DEFENSA)
+# ========================================================
 
-# Filtro Heurístico (Nivel 1 de Defensa)
-PATRONES_SOSPECHOSOS = [
-    r"(?i)(batman|superman|spiderman|joker|hacker|admin|root|test|bot)", # Nombres falsos comunes
-    r"(?i)(drop\s+table|select\s+\*|union\s+all|delete\s+from)", # Inyecciones SQL
-    r"(?i)(<script>|javascript:|onerror=|onload=)", # Ataques XSS
-    r"[;\'\"\|]" # Caracteres especiales de inyección
+# 1. Regla de Compradores: Zero Tolerance (Nombres absurdos, personajes, bots y groserías)
+PATRONES_COMPRADORES_PROHIBIDOS = [
+    r"(?i)\b(batman|superman|spiderman|joker|hacker|admin|root|test|bot|goku|naruto|shrek|anon|anonymous|el_macho|null|undefined)\b",
+    r"(?i)\b(verga|mierda|culo|puta|puto|chucha|cojudo|malparido|hdp|pendejo|careverga|zorra)\b",
+    r"[;\'\"\|\{\}\$]" # Caracteres de inyección
 ]
 
-def obtener_valores_texto(d):
-    valores = []
-    if isinstance(d, dict):
-        for v in d.values():
-            valores.extend(obtener_valores_texto(v))
-    elif isinstance(d, list):
-        for v in d:
-            valores.extend(obtener_valores_texto(v))
-    elif isinstance(d, str):
-        valores.append(d)
-    return valores
+# 2. Regla de Vendedores: Tolerancia a nombres creativos/raros, pero CERO vulgaridades
+PATRONES_VENDEDORES_VULGARES = [
+    r"(?i)\b(verga|mierda|culo|puta|puto|chucha|cojudo|malparido|hdp|pendejo|careverga|zorra)\b",
+    r"(?i)(drop\s+table|delete\s+from|union\s+all|<script>|\$where|\$regex)" # Inyecciones directas
+]
 
-def es_sospechoso(reserva_dict):
-    valores = obtener_valores_texto(reserva_dict)
-    for texto in valores:
-        for patron in PATRONES_SOSPECHOSOS:
-            if re.search(patron, texto):
-                return True
-    return False
+# 3. Inyecciones NoSQL y XSS generales
+PATRONES_INYECCION = [
+    r"(?i)(\$ne|\$gt|\$gte|\$lt|\$lte|\$in|\$nin|\$where|\$regex)",
+    r"(?i)(<script>|javascript:|onerror=|onload=)",
+]
 
-def parse_firestore_doc(doc):
-    parsed = {"id_documento": doc.get("name", "").split("/")[-1]}
-    fields = doc.get("fields", {})
-    for key, value_dict in fields.items():
-        if value_dict:
-            parsed[key] = list(value_dict.values())[0]
-    return parsed
-            
-def fetch_collection(collection_name, id_token, tipo_label):
-    docs_list = []
-    db_url = f"https://firestore.googleapis.com/v1/projects/{PROJECT_ID}/databases/(default)/documents/{collection_name}"
-    db_req = urllib.request.Request(db_url, headers={"Authorization": f"Bearer {id_token}"})
-    try:
-        with urllib.request.urlopen(db_req) as db_res:
-            db_data = json.loads(db_res.read().decode())
-            for doc in db_data.get("documents", []):
-                parsed = parse_firestore_doc(doc)
-                if tipo_label:
-                    parsed['_tipo'] = tipo_label
-                docs_list.append(parsed)
-    except Exception:
-        pass
-    return docs_list
+def obtener_conexiones_mongo():
+    load_env_file()
+    uri = os.getenv("MONGODB_URI", "")
+    db_name = os.getenv("MONGODB_DATABASE", "miveci")
+    return uri, db_name
+
+def es_nombre_comprador_invalido(nombre):
+    if not nombre or len(str(nombre).strip()) < 2:
+        return True, "Nombre vacío o demasiado corto"
+    for p in PATRONES_COMPRADORES_PROHIBIDOS:
+        if re.search(p, str(nombre)):
+            return True, f"Coincide con patrón no permitido: {p}"
+    return False, None
+
+def es_nombre_vendedor_vulgar(nombre):
+    if not nombre:
+        return False, None
+    for p in PATRONES_VENDEDORES_VULGARES:
+        if re.search(p, str(nombre)):
+            return True, f"Palabra soez o inyección detectada: {p}"
+    return False, None
 
 def escanear_reservas():
     os.system('cls' if os.name == 'nt' else 'clear')
-    print("========================================")
-    print(" 🛡️  C E R B E R U S   S E C U R I T Y 🛡️")
-    print("========================================")
-    print("[Módulo 2] Escáner de Spam en Base de Datos (Defensa Activa)")
+    print("=====================================================================")
+    print(" 🛡️  C E R B E R U S   S E C U R I T Y   H A C K E R   A I  🛡️")
+    print("=====================================================================")
+    print("[Módulo 2] Escáner de Base de Datos MongoDB Atlas (Defensa Activa)\n")
+    print("Reglas aplicadas:")
+    print("  • Compradores: Zero Tolerance (Nombres reales, ni Batman ni trolls)")
+    print("  • Vendedores: Tolerancia creativa, BLOQUEO estricto a palabras soeces")
+    print("  • General: Detección activa de inyecciones NoSQL ($ne, $gt, XSS)\n")
     
-    reservas = []
-    id_token = None
+    uri, db_name = obtener_conexiones_mongo()
+    registros = []
+    mongo_client = None
     
-    print("🌐 Conectando a Firebase Firestore en la nube (Vía REST API)...\n")
+    print(f"🌐 Conectando a MongoDB Atlas ({db_name})...")
+    
     try:
-        auth_url = f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={API_KEY}"
-        payload = json.dumps({
-            "email": "bot_python@barbershop.com",
-            "password": "bot123456",
-            "returnSecureToken": True
-        }).encode('utf-8')
+        from pymongo import MongoClient
+        mongo_client = MongoClient(uri, serverSelectionTimeoutMS=4000)
+        db = mongo_client[db_name]
         
-        req = urllib.request.Request(auth_url, data=payload, headers={'Content-Type': 'application/json'})
-        with urllib.request.urlopen(req) as res:
-            id_token = json.loads(res.read().decode()).get("idToken")
-            
-        reservas.extend(fetch_collection("bookings", id_token, None))
-        reservas.extend(fetch_collection("profiles", id_token, "Perfil de Usuario"))
-
-        if len(reservas) > 0:
-            print(f"✅ Base de datos descargada con éxito ({len(reservas)} registros encontrados).\n")
-        else:
-            print("ℹ️ La base de datos está vacía. No hay reservas ni perfiles aún.\n")
-            
-    except Exception as e:
-        print(f"⚠️ Acceso denegado o error de conexión: {e}")
-        print("📂 Usando base de datos local (data/reservas_db.json) como respaldo...\n")
+        # 1. Obtener Tiendas (businesses)
         try:
-            with open("data/reservas_db.json", "r") as file:
-                reservas = json.load(file)
-        except FileNotFoundError:
-            print("❌ Error: No se encontró la base de datos local ni en la nube.")
-            input("\nPresiona ENTER para volver al menú...")
-            return
+            for b in db.businesses.find().limit(30):
+                b['_tipo'] = 'VENDEDOR'
+                registros.append(b)
+        except Exception:
+            pass
+            
+        # 2. Obtener Usuarios (users)
+        try:
+            for u in db.users.find().limit(30):
+                u['_tipo'] = 'COMPRADOR' if u.get('role') != 'seller' else 'VENDEDOR'
+                registros.append(u)
+        except Exception:
+            pass
+            
+        print(f"✅ Descargados {len(registros)} registros de MongoDB Atlas para análisis forense.\n")
+    except Exception as e:
+        print(f"⚠️ Aviso: Conexión directa a MongoDB Atlas limitada ({e}).")
+        print("📂 Usando registros locales de respaldo para verificación...\n")
+        
+        # Cargar respaldo si existe
+        backup_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data/reservas_db.json")
+        if os.path.exists(backup_path):
+            with open(backup_path, 'r', encoding='utf-8') as f:
+                registros = json.load(f)
+                
+    if not registros:
+        print("ℹ️ No hay registros pendientes de análisis en este momento.")
+        input("\nPresiona ENTER para volver al menú...")
+        return
 
-    for reserva in reservas:
-        tipo = reserva.get('_tipo', 'Reserva')
-        folio = reserva.get('folio', reserva.get('id_documento', 'N/A'))
-        nombre = reserva.get('name', reserva.get('full_name', reserva.get('nombre', 'N/A')))
+    amenazas_detectadas = 0
+    
+    print("-" * 65)
+    for idx, reg in enumerate(registros):
+        tipo = reg.get('_tipo', 'COMPRADOR')
+        id_doc = str(reg.get('_id', reg.get('id', f'REG-{idx}')))
+        nombre = reg.get('storeName', reg.get('name', reg.get('cliente', 'Desconocido')))
         
-        # Filtro de Nivel 1 (Ahorro de IA)
-        if not es_sospechoso(reserva):
-            print(f"[*] Analizando {tipo} -> ID: {folio} | Cliente: {nombre}  ✅")
-            continue 
+        es_amenaza = False
+        razon_amenaza = ""
+        
+        # Nivel 1: Filtro Heurístico
+        if tipo == 'COMPRADOR':
+            es_invalido, motivo = es_nombre_comprador_invalido(nombre)
+            if es_invalido:
+                es_amenaza = True
+                razon_amenaza = f"Nombre de comprador no permitido ({motivo})"
+        else: # VENDEDOR
+            es_vulgar, motivo = es_nombre_vendedor_vulgar(nombre)
+            if es_vulgar:
+                es_amenaza = True
+                razon_amenaza = f"Nombre de negocio con palabras soeces/ataque ({motivo})"
+                
+        # Nivel 2: Detección profunda de Inyecciones NoSQL
+        reg_str = json.dumps({k: v for k, v in reg.items() if k != '_id'}, default=str)
+        for p in PATRONES_INYECCION:
+            if re.search(p, reg_str):
+                es_amenaza = True
+                razon_amenaza = f"Inyección NoSQL detectada ({p})"
+                break
+                
+        if es_amenaza:
+            amenazas_detectadas += 1
+            print(f"🚨 \033[91m[AMENAZA DETECTADA - {tipo}]\033[0m")
+            print(f"   ID: {id_doc} | Sujeto: '{nombre}'")
+            print(f"   Causa: {razon_amenaza}")
             
-        print(f"[*] Analizando {tipo} -> ID: {folio} | Cliente: {nombre}")
-        print("   -> ⚠️ \033[93mAnomalía detectada. Iniciando análisis profundo con IA...\033[0m")
-        
-        prompt = """Actúa como un experto analista SOC. Nuestro filtro rápido detectó símbolos sospechosos o nombres falsos en este registro.
-Haz un análisis profundo y dime EXACTAMENTE qué intentaba hacer el atacante o si es un falso positivo.
-Responde obligatoriamente iniciando con: [CRÍTICA], [ADVERTENCIA] o [SEGURO], y luego tu justificación técnica breve."""
-        resultado_ia = analizar_con_ia(prompt, str(reserva))
-        
-        if "[CRÍTICA]" in resultado_ia.upper():
-            print(f"   -> 🚨 \033[91m{resultado_ia}\033[0m")
-            guardar_incidente("Escáner BD (Firebase)", "CRÍTICA", f"Ataque en {tipo} {folio}:\n\nDatos:\n{reserva}\n\nConclusión de la IA:\n{resultado_ia}")
+            # Pasar a la IA para dictamen final
+            print("   [*] Solicitando veredicto a Cerberus IA (Gemini)...")
+            prompt_ia = f"""Eres Cerberus Security AI. Analiza este registro de la base de datos de MiVeci App.
+Tipo de usuario: {tipo}
+Nombre/Dato: {nombre}
+Contenido completo: {reg_str[:400]}
+
+Reglas:
+- Si es COMPRADOR: No se permiten personajes ficticios (Batman, etc.), bots, trolls ni groserías.
+- Si es VENDEDOR: Se permiten nombres raros/creativos de locales, pero CERO palabras vulgares soeces.
+- NoSQL Injection: Cero tolerancia a $ne, $gt o scripts.
+
+Responde ÚNICAMENTE con:
+ESTADO: BLOQUEADO (ATAQUE) o ESTADO: PERMITIDO
+SEVERIDAD: CRÍTICO, ALTO, MEDIO o BAJO
+JUSTIFICACIÓN: 1 frase explicativa.
+"""
+            veredicto = analizar_con_ia(prompt_ia, nombre)
+            print(f"   🤖 Dictamen IA: {veredicto.strip().replace(chr(10), ' | ')}")
             
-            # --- ACCIÓN AUTÓNOMA: Mover a Cuarentena en Firebase ---
-            if id_token and folio != 'N/A':
+            # Acción activa: Mover a Cuarentena si hay cliente Mongo
+            if mongo_client:
                 try:
-                    coleccion = "profiles" if tipo == 'Perfil de Usuario' else "bookings"
-                    # En lugar de DELETE, hacemos un PATCH para ponerlo en CUARENTENA
-                    del_url = f"https://firestore.googleapis.com/v1/projects/{PROJECT_ID}/databases/(default)/documents/{coleccion}/{folio}?updateMask.fieldPaths=status"
-                    payload_patch = json.dumps({"fields": {"status": {"stringValue": "CUARENTENA"}}}).encode('utf-8')
-                    del_req = urllib.request.Request(del_url, data=payload_patch, method="PATCH", headers={"Content-Type": "application/json", "Authorization": f"Bearer {id_token}"})
-                    with urllib.request.urlopen(del_req) as del_res:
-                        pass
-                    print(f"   -> 🛑 \033[91mACCIÓN AUTÓNOMA: El {tipo} malicioso fue puesto en CUARENTENA automáticamente.\033[0m")
-                    guardar_incidente("Defensa Activa", "CRÍTICA", f"Cuarentena automática de {tipo} con ID {folio} por ataque crítico.")
-                except Exception as e:
-                    print(f"   -> ⚠️ \033[93mFallo al intentar neutralizar la amenaza automáticamente: {e}\033[0m")
+                    col_name = "businesses" if tipo == 'VENDEDOR' else "users"
+                    db[col_name].update_one(
+                        {"_id": reg.get('_id')},
+                        {"$set": {"cerberus_status": "CUARENTENA", "quarantine_reason": razon_amenaza}}
+                    )
+                    print(f"   🔒 \033[92mAcción de Defensa: Registro movido a CUARENTENA en MongoDB Atlas.\033[0m")
+                except Exception as db_err:
+                    print(f"   ⚠️ No se pudo aplicar cuarentena: {db_err}")
                     
-            print("-" * 50)
-        elif "[ADVERTENCIA]" in resultado_ia.upper():
-            print(f"   -> ⚠️ \033[93m{resultado_ia}\033[0m")
-            guardar_incidente("Escáner BD (Firebase)", "ALTA", f"Spam en {tipo} {folio}:\n\nDatos:\n{reserva}\n\nConclusión de la IA:\n{resultado_ia}")
-            print("-" * 50)
-        elif "[SEGURO]" in resultado_ia.upper():
-            print(f"   -> ✅ \033[92m[SEGURO] Falso positivo descartado. El usuario es seguro.\033[0m")
-            print("-" * 50)
+            guardar_incidente("Escáner BD (MongoDB)", "ALTO", f"{tipo}: '{nombre}' bloqueado. Causa: {razon_amenaza}")
+            print("-" * 65)
         else:
-            print(f"   -> ❌ \033[91m{resultado_ia}\033[0m")
-            print("-" * 50)
-        
-    input("\nPresiona ENTER para volver al menú...")
+            print(f"✅ \033[92m[SEGURO - {tipo}]\033[0m {id_doc}: '{nombre}' verificado correctamente.")
+            
+    print("=" * 65)
+    print(f"Resumen del Escaneo: {len(registros)} registros analizados, {amenazas_detectadas} amenazas neutralizadas.")
+    input("\nPresiona ENTER para volver al menú principal...")
