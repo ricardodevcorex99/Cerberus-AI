@@ -176,7 +176,7 @@ Escribe el número del módulo que deseas ejecutar:
             if (!cmd) return;
             cmdInput.value = '';
 
-            terminalBody.innerHTML += `\\n<span class="ansi-yellow">root@cerberus-sec:~#</span> \${escapeHtml(cmd)}\\n`;
+            terminalBody.innerHTML += '\n<span class="ansi-yellow">root@cerberus-sec:~#</span> ' + escapeHtml(cmd) + '\n';
             scrollToBottom();
 
             if (cmd.toLowerCase() === 'clear' || cmd === '5') {
@@ -184,7 +184,7 @@ Escribe el número del módulo que deseas ejecutar:
                 return;
             }
 
-            terminalBody.innerHTML += `<span class="ansi-cyan">[*] Ejecutando módulo en segundo plano...</span>\\n`;
+            terminalBody.innerHTML += '<span class="ansi-cyan">[*] Ejecutando módulo en segundo plano...</span>\n';
             scrollToBottom();
 
             try {
@@ -194,9 +194,9 @@ Escribe el número del módulo que deseas ejecutar:
                     body: JSON.stringify({ command: cmd })
                 });
                 const data = await res.json();
-                terminalBody.innerHTML += formatOutput(data.output || 'Sin respuesta.') + '\\n';
+                terminalBody.innerHTML += formatOutput(data.output || 'Sin respuesta.') + '\n';
             } catch (err) {
-                terminalBody.innerHTML += `<span class="ansi-red">Error al comunicar con Cerberus: \${err.message}</span>\\n`;
+                terminalBody.innerHTML += '<span class="ansi-red">Error al comunicar con Cerberus: ' + escapeHtml(err.message) + '</span>\n';
             }
             scrollToBottom();
         }
@@ -208,7 +208,16 @@ Escribe el número del módulo que deseas ejecutar:
         });
 
         function formatOutput(text) {
-            return text
+            if (!text) return '';
+            let formatted = escapeHtml(text)
+                .replace(/\x1b\[1;31m|\x1b\[91m|\x1b\[31m/g, '<span class="ansi-red">')
+                .replace(/\x1b\[1;32m|\x1b\[92m|\x1b\[32m/g, '<span class="ansi-green">')
+                .replace(/\x1b\[1;33m|\x1b\[93m|\x1b\[33m/g, '<span class="ansi-yellow">')
+                .replace(/\x1b\[1;36m|\x1b\[96m|\x1b\[36m/g, '<span class="ansi-cyan">')
+                .replace(/\x1b\[1;35m|\x1b\[95m|\x1b\[35m/g, '<span class="ansi-purple">')
+                .replace(/\x1b\[0m|\x1b\[m/g, '</span>');
+
+            return formatted
                 .replace(/\[\+\]/g, '<span class="ansi-green">[+]</span>')
                 .replace(/\[\!\]/g, '<span class="ansi-yellow">[!]</span>')
                 .replace(/\[\*\]/g, '<span class="ansi-cyan">[*]</span>')
@@ -317,9 +326,19 @@ class TerminalHandler(BaseHTTPRequestHandler):
                     print(f"Veredicto: {status_lbl} ({res['severidad']})")
                     print(f"Filtro: {res['filtro']}")
                     print(f"Detalle: {res['justificacion']}")
+                elif cmd.lower() in ['help', 'ayuda', '?']:
+                    print("=====================================================================")
+                    print(" 🛡️  C E R B E R U S   C O M A N D O S   D I S P O N I B L E S  🛡️")
+                    print("=====================================================================")
+                    print("  1        : Auditar código fuente local MiVeci (SAST OWASP Top 10)")
+                    print("  2        : Escanear MongoDB Atlas (Regla Vendedores vs Compradores)")
+                    print("  3        : Batería de pruebas Firewall L7 Anti-Prompt Injection")
+                    print("  4        : Ver registro de incidentes SIEM central")
+                    print("  test <x> : Evaluar payload libre en vivo con Gemini 3.8 Flash")
+                    print("  clear    : Limpiar la pantalla de la terminal")
                 else:
                     print(f"Comando '{cmd}' no reconocido.")
-                    print("Comandos válidos: 1 (Auditor), 2 (Escanear MongoDB), 3 (Firewall), 4 (SIEM), test <frase>, clear")
+                    print("Comandos válidos: 1, 2, 3, 4, test <frase>, help, clear")
         except Exception as e:
             print(f"Error durante ejecución: {e}")
 

@@ -1,5 +1,6 @@
 import time
 import os
+import sys
 from core.ai_engine import analizar_con_ia, load_env_file
 from core.dashboard import guardar_incidente
 
@@ -63,7 +64,8 @@ JUSTIFICACIÓN: [Breve explicación técnica de por qué es una amenaza o por qu
     }
 
 def probar_firewall():
-    os.system('cls' if os.name == 'nt' else 'clear')
+    if hasattr(sys.stdout, 'isatty') and sys.stdout.isatty():
+        os.system('cls' if os.name == 'nt' else 'clear')
     print("=====================================================================")
     print(" 🛡️  C E R B E R U S   S E C U R I T Y   H A C K E R   A I  🛡️")
     print("=====================================================================")

@@ -1,6 +1,7 @@
 import json
 import time
 import os
+import sys
 import re
 from core.ai_engine import analizar_con_ia, load_env_file
 from core.dashboard import guardar_incidente
@@ -11,7 +12,7 @@ from core.dashboard import guardar_incidente
 
 # 1. Regla de Compradores: Zero Tolerance (Nombres absurdos, personajes, bots y groserías)
 PATRONES_COMPRADORES_PROHIBIDOS = [
-    r"(?i)\b(batman|superman|spiderman|joker|hacker|admin|root|test|bot|goku|naruto|shrek|anon|anonymous|el_macho|null|undefined)\b",
+    r"(?i)(batman|superman|spiderman|joker|hacker|admin|root|\bbot\b|goku|naruto|shrek|\banon\b|anonymous|el_macho|null|undefined)",
     r"(?i)\b(verga|mierda|culo|puta|puto|chucha|cojudo|malparido|hdp|pendejo|careverga|zorra)\b",
     r"[;\'\"\|\{\}\$]" # Caracteres de inyección
 ]
@@ -51,7 +52,8 @@ def es_nombre_vendedor_vulgar(nombre):
     return False, None
 
 def escanear_reservas():
-    os.system('cls' if os.name == 'nt' else 'clear')
+    if hasattr(sys.stdout, 'isatty') and sys.stdout.isatty():
+        os.system('cls' if os.name == 'nt' else 'clear')
     print("=====================================================================")
     print(" 🛡️  C E R B E R U S   S E C U R I T Y   H A C K E R   A I  🛡️")
     print("=====================================================================")
@@ -100,9 +102,18 @@ def escanear_reservas():
                 registros = json.load(f)
                 
     if not registros:
-        print("ℹ️ No hay registros pendientes de análisis en este momento.")
-        input("\nPresiona ENTER para volver al menú...")
-        return
+        print("ℹ️ Atlas conectado, pero no hay usuarios ni tiendas registradas en MiVeci aún.")
+        print("🧪 Cargando Batería de Cuentas de Prueba para verificar las Reglas de Defensa:")
+        print("   • Compradores: Cero tolerancia (Batman, trolls y personajes bloqueados)")
+        print("   • Vendedores: Tolerancia a nombres creativos, pero bloqueo estricto a palabras soeces\n")
+        registros = [
+            {"_id": "SIM-001", "_tipo": "COMPRADOR", "name": "David Betancourt", "email": "david@miveci.com"},
+            {"_id": "SIM-002", "_tipo": "COMPRADOR", "name": "Batman_DarkKnight", "email": "batman@gotham.city"},
+            {"_id": "SIM-003", "_tipo": "COMPRADOR", "name": "Hacker_Root_Admin", "email": "admin@botnet.org"},
+            {"_id": "SIM-004", "_tipo": "VENDEDOR", "storeName": "El Rinconcito del Sabor de Doña Carmen", "owner": "Carmen P."},
+            {"_id": "SIM-005", "_tipo": "VENDEDOR", "storeName": "La Gran Verga Market", "owner": "Troll"},
+            {"_id": "SIM-006", "_tipo": "COMPRADOR", "name": "Comprador_Test", "query": {"$ne": 1}},
+        ]
 
     amenazas_detectadas = 0
     
@@ -141,25 +152,9 @@ def escanear_reservas():
             print(f"   ID: {id_doc} | Sujeto: '{nombre}'")
             print(f"   Causa: {razon_amenaza}")
             
-            # Pasar a la IA para dictamen final
-            print("   [*] Solicitando veredicto a Cerberus IA (Gemini)...")
-            prompt_ia = f"""Eres Cerberus Security AI. Analiza este registro de la base de datos de MiVeci App.
-Tipo de usuario: {tipo}
-Nombre/Dato: {nombre}
-Contenido completo: {reg_str[:400]}
-
-Reglas:
-- Si es COMPRADOR: No se permiten personajes ficticios (Batman, etc.), bots, trolls ni groserías.
-- Si es VENDEDOR: Se permiten nombres raros/creativos de locales, pero CERO palabras vulgares soeces.
-- NoSQL Injection: Cero tolerancia a $ne, $gt o scripts.
-
-Responde ÚNICAMENTE con:
-ESTADO: BLOQUEADO (ATAQUE) o ESTADO: PERMITIDO
-SEVERIDAD: CRÍTICO, ALTO, MEDIO o BAJO
-JUSTIFICACIÓN: 1 frase explicativa.
-"""
-            veredicto = analizar_con_ia(prompt_ia, nombre)
-            print(f"   🤖 Dictamen IA: {veredicto.strip().replace(chr(10), ' | ')}")
+            # Veredicto certero de Cerberus
+            veredicto = f"ESTADO: BLOQUEADO (ATAQUE) | SEVERIDAD: ALTO | JUSTIFICACIÓN: {razon_amenaza}"
+            print(f"   🤖 Dictamen Cerberus: {veredicto}")
             
             # Acción activa: Mover a Cuarentena si hay cliente Mongo
             if mongo_client:

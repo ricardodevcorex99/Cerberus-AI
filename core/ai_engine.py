@@ -67,17 +67,17 @@ def analizar_con_ia(prompt, datos):
                 error_body = e.read().decode('utf-8', errors='ignore')
                 
                 if code == 429:
-                    if intento < 2:
-                        print("⚠️ [Cerberus IA] Límite de cuota alcanzado. Esperando 15 segundos de enfriamiento...")
-                        time.sleep(15)
+                    if intento < 1:
+                        print("⚠️ [Cerberus IA] Límite de cuota alcanzado. Reintentando...")
+                        time.sleep(2)
                         continue
-                    return "Error API (Código 429): Límite de peticiones de cuota excedido. Intenta en unos momentos."
+                    return "Error API (Código 429): Límite de cuota alcanzado."
                 elif code in [500, 502, 503]:
-                    if intento < 2:
-                        print(f"⚠️ [Cerberus IA] Servidor temporalmente ocupado (Código {code}). Reintentando en 3s...")
-                        time.sleep(3)
+                    if intento < 1:
+                        print(f"⚠️ [Cerberus IA] Servidor temporalmente ocupado (Código {code}). Reintentando...")
+                        time.sleep(1)
                         continue
-                    return f"Error API (Código {code}): Los servidores de IA están saturados."
+                    return f"Error API (Código {code}): Servidores temporalmente ocupados."
                 else:
                     return f"Error API (Código {code}): {error_body}"
             except Exception as conn_err:
