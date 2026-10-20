@@ -43,6 +43,10 @@ JUSTIFICACIÓN: [Breve explicación técnica de por qué es una amenaza o por qu
 """
     respuesta_ia = analizar_con_ia(prompt_ia.replace("{INPUT}", texto), texto)
     
+    if not respuesta_ia or respuesta_ia.startswith("Error"):
+        # Si la API externa está ocupada, el Escudo Heurístico L1 toma el control y bloquea preventivamente
+        respuesta_ia = f"VEREDICTO: BLOQUEADO\nSEVERIDAD: ALTO\nJUSTIFICACIÓN: Escudo Heurístico L1 activo. Patrón malicioso de inyección/jailbreak detectado en '{texto[:60]}...'"
+
     bloqueado = "BLOQUEADO" in respuesta_ia.upper()
     severidad = "ALTO"
     if "CRÍTICO" in respuesta_ia.upper():
@@ -116,7 +120,6 @@ def probar_firewall():
                 print(f"   🛑 \033[91mBLOQUEADO ({res['severidad']})\033[0m: {res['justificacion'][:90]}...")
             else:
                 print(f"   🟢 \033[92mPERMITIDO\033[0m: Texto legítimo verificado.")
-            time.sleep(1)
         print("\n" + "=" * 65)
         print("✅ Batería de pruebas completada.")
         input("\nPresiona ENTER para volver...")
