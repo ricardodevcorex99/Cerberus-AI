@@ -90,49 +90,31 @@ class TerminalHandler(BaseHTTPRequestHandler):
         buf = io.StringIO()
         try:
             with redirect_stdout(buf), redirect_stderr(buf):
-                if cmd == '1':
+                if cmd in ['1', '1 local']:
                     print("--- INICIANDO AUDITORÍA SAST LOCAL ---")
                     from modules.modulo1_auditor import auditar_codigo
-                    import builtins
-                    orig_input = builtins.input
-                    builtins.input = lambda _: "1"
-                    try:
-                        auditar_codigo()
-                    finally:
-                        builtins.input = orig_input
+                    auditar_codigo(modo='local')
+
+                elif cmd.startswith('1 github '):
+                    url = cmd[9:].strip()
+                    print(f"--- INICIANDO AUDITORÍA SAST REMOTA ({url}) ---")
+                    from modules.modulo1_auditor import auditar_codigo
+                    auditar_codigo(modo='github', github_url=url)
 
                 elif cmd == '2':
                     print("--- ESCANEANDO MONGODB ATLAS (VENDEDORES VS COMPRADORES) ---")
                     from modules.modulo2_spam import escanear_reservas
-                    import builtins
-                    orig_input = builtins.input
-                    builtins.input = lambda _: ""
-                    try:
-                        escanear_reservas()
-                    finally:
-                        builtins.input = orig_input
+                    escanear_reservas()
 
                 elif cmd == '3':
                     print("--- DIAGNÓSTICO DE FORMULARIOS Y ENTRADAS (FIREWALL MIVECI) ---")
                     from modules.modulo3_firewall import probar_firewall
-                    import builtins
-                    orig_input = builtins.input
-                    builtins.input = lambda _: "2"
-                    try:
-                        probar_firewall()
-                    finally:
-                        builtins.input = orig_input
+                    probar_firewall(modo='test')
 
                 elif cmd == '4':
                     print("--- REGISTRO CENTRAL DE INCIDENTES SIEM ---")
                     from core.dashboard import ver_dashboard
-                    import builtins
-                    orig_input = builtins.input
-                    builtins.input = lambda _: ""
-                    try:
-                        ver_dashboard()
-                    finally:
-                        builtins.input = orig_input
+                    ver_dashboard()
 
                 elif cmd.startswith("test "):
                     payload = cmd[5:].strip()

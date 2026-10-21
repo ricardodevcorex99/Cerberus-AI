@@ -6,24 +6,31 @@ import urllib.error
 from core.ai_engine import analizar_con_ia
 from core.dashboard import guardar_incidente
 
-def auditar_codigo():
+def auditar_codigo(modo='local', github_url=None):
     if hasattr(sys.stdout, 'isatty') and sys.stdout.isatty():
         os.system('cls' if os.name == 'nt' else 'clear')
     print("=====================================================================")
     print(" 🛡️  C E R B E R U S   S E C U R I T Y   H A C K E R   A I  🛡️")
     print("=====================================================================")
     print("[Módulo 1] Auditoría de Seguridad SAST (OWASP Top 10 & Credential Leaks)\n")
-    print("Selecciona el objetivo a auditar:")
-    print("  [ 1 ] Auditar código local de MiVeci App (Controladores, Rutas y APIs)")
-    print("  [ 2 ] Auditar archivo remoto desde GitHub (URL Raw)")
-    print("  [ 3 ] Cancelar y volver al menú principal\n")
-    
-    opc = input("root@cerberus-auditor:~# ").strip()
-    
+
+    opc = modo
+    # Si no se pasó modo y estamos en una terminal TTY interactiva
+    if not opc:
+        if hasattr(sys.stdin, 'isatty') and sys.stdin.isatty():
+            print("Selecciona el objetivo a auditar:")
+            print("  [ 1 ] Auditar código local de MiVeci App (Controladores, Rutas y APIs)")
+            print("  [ 2 ] Auditar archivo remoto desde GitHub (URL Raw)")
+            print("  [ 3 ] Cancelar y volver al menú principal\n")
+            opc = input("root@cerberus-auditor:~# ").strip()
+        else:
+            opc = 'local'
+
     codigo_fuente = ""
     nombre_objetivo = ""
-    
-    if opc == '1':
+
+    if opc in ['1', 'local']:
+        print("🎯 Objetivo: Código Fuente Local de MiVeci App (Controladores, Rutas y APIs)\n")
         # Auditar código clave de MiVeci
         base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         parent_dir = os.path.dirname(base_dir)
@@ -71,22 +78,25 @@ def auditar_codigo():
         nombre_objetivo = f"MiVeci Core App ({len(snippets)} archivos)"
         print(f"[*] Código local de MiVeci recopilado ({len(snippets)} archivos clave)...")
         
-    elif opc == '2':
-        github_url = input("\nIngresa la URL Raw del archivo en GitHub: ").strip()
+    elif opc in ['2', 'github']:
+        if not github_url:
+            if hasattr(sys.stdin, 'isatty') and sys.stdin.isatty():
+                github_url = input("\nIngresa la URL Raw del archivo en GitHub: ").strip()
+            else:
+                print("❌ No se especificó la URL de GitHub. Uso: 1 github <URL_RAW>")
+                return
         if not github_url:
             print("❌ Operación cancelada.")
-            time.sleep(1)
             return
-            
+
         try:
-            print("[*] Descargando código fuente desde GitHub...")
+            print(f"[*] Descargando código fuente desde GitHub ({github_url})...")
             req = urllib.request.Request(github_url, headers={'User-Agent': 'Cerberus-Auditor'})
             with urllib.request.urlopen(req, timeout=15) as resp:
                 codigo_fuente = resp.read().decode('utf-8', errors='ignore')
                 nombre_objetivo = github_url.split('/')[-1]
         except Exception as e:
             print(f"❌ Error al descargar de GitHub: {e}")
-            input("\nPresiona ENTER para continuar...")
             return
     else:
         return
@@ -150,4 +160,5 @@ Genera el reporte con esta estructura exacta:
         
     inc_id = guardar_incidente("Auditor SAST", severidad, f"Auditoría ejecutada sobre {nombre_objetivo}. Veredicto: {severidad}")
     print(f"\n[+] Incidente registrado en el SIEM con ID: {inc_id} ({severidad})")
-    input("\nPresiona ENTER para volver al menú...")
+    if hasattr(sys.stdin, 'isatty') and sys.stdin.isatty() and not modo:
+        input("\nPresiona ENTER para volver al menú...")

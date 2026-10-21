@@ -589,14 +589,20 @@
             <button class="quick-btn" onclick="sendCmd('1')">
                 <span>🔍 [1] Auditar Código Local</span>
             </button>
+            <button class="quick-btn" onclick="promptGitHubAudit()">
+                <span>🐙 Auditar GitHub Raw</span>
+            </button>
             <button class="quick-btn" onclick="sendCmd('2')">
                 <span>💾 [2] Escanear MongoDB Atlas</span>
             </button>
             <button class="quick-btn" onclick="sendCmd('3')">
-                <span>🧱 [3] Probar Firewall de Entradas</span>
+                <span>🧱 [3] Diagnóstico de Firewall</span>
             </button>
             <button class="quick-btn" onclick="sendCmd('4')">
                 <span>📊 [4] Registro SIEM</span>
+            </button>
+            <button class="quick-btn" onclick="promptCustomTest()">
+                <span>✍️ Probar Mi Propio Texto</span>
             </button>
             <button class="quick-btn" onclick="sendCmd('test Venta de Ropa La Verga Store')">
                 <span>🚫 Test Tienda con Soeces</span>
@@ -635,6 +641,20 @@
             setTimeout(() => {
                 terminalBody.scrollTop = terminalBody.scrollHeight;
             }, 50);
+        }
+
+        function promptGitHubAudit() {
+            const url = prompt("Ingresa la URL Raw del archivo en GitHub para auditar:", "https://raw.githubusercontent.com/ricardodevcorex99/PROYECTO-SUMMER-CAMP/main/app.py");
+            if (url && url.trim()) {
+                sendCmd("1 github " + url.trim());
+            }
+        }
+
+        function promptCustomTest() {
+            const texto = prompt("Ingresa cualquier texto o nombre para que Cerberus lo analice:");
+            if (texto && texto.trim()) {
+                sendCmd("test " + texto.trim());
+            }
         }
 
         function clearTerminal() {

@@ -106,7 +106,7 @@ JUSTIFICACIÓN: [1 frase explicativa]"""
         "filtro": "Escudo Cerberus L1 (Verificado)"
     }
 
-def probar_firewall():
+def probar_firewall(modo='test'):
     if hasattr(sys.stdout, 'isatty') and sys.stdout.isatty():
         os.system('cls' if os.name == 'nt' else 'clear')
     print("=====================================================================")
@@ -117,14 +117,19 @@ def probar_firewall():
     print("  • Registro de Tiendas: Bloqueo estricto a palabras soeces/groserías")
     print("  • Registro de Compradores: Zero Tolerance a Batman, bots y trolls")
     print("  • Buscador y Catálogos: Bloqueo de Inyecciones NoSQL ($ne, $gt, XSS)\n")
-    print("Elige el modo de operación:")
-    print("  [ 1 ] Simulador Interactivo (Escribe cualquier texto de prueba)")
-    print("  [ 2 ] Test de Diagnóstico de Campos de la App MiVeci")
-    print("  [ 3 ] Volver al menú principal\n")
 
-    opc = input("root@cerberus-firewall:~# ").strip()
+    opc = modo
+    if not opc:
+        if hasattr(sys.stdin, 'isatty') and sys.stdin.isatty():
+            print("Elige el modo de operación:")
+            print("  [ 1 ] Simulador Interactivo (Escribe cualquier texto de prueba)")
+            print("  [ 2 ] Test de Diagnóstico de Campos de la App MiVeci")
+            print("  [ 3 ] Volver al menú principal\n")
+            opc = input("root@cerberus-firewall:~# ").strip()
+        else:
+            opc = '2'
 
-    if opc == '1':
+    if opc in ['1', 'simulador']:
         print("\n💡 Escribe 'salir' para terminar la simulación.")
         while True:
             payload = input("\n\033[1;33m[Simulador Inyección] Ingrese texto de prueba: \033[0m").strip()
@@ -144,7 +149,9 @@ def probar_firewall():
                 print(f"🟢 \033[92m[ACCESO PERMITIDO - {res['severidad']}]\033[0m Entrada segura aceptada.")
                 print(f"   Detalle: {res['justificacion']}")
 
-    elif opc == '2':
+    elif opc in ['2', 'test']:
+        print("🎯 Operación: Diagnóstico Automatizado de Reglas (Formularios y Búsquedas)")
+        print("🔍 Comprobando 6 campos críticos contra escudos de ciberseguridad...")
         pruebas = [
             ("Registro de Tienda", "Panadería y Pastelería La Espiga Dorada"),
             ("Registro de Tienda", "Venta de Ropa La Verga Store"),
@@ -165,4 +172,5 @@ def probar_firewall():
                 print(f"   🟢 \033[92mPERMITIDO\033[0m: {res['justificacion']}")
         print("\n" + "=" * 65)
         print("✅ Diagnóstico de campos de MiVeci completado exitosamente.")
-        input("\nPresiona ENTER para volver...")
+        if hasattr(sys.stdin, 'isatty') and sys.stdin.isatty() and not modo:
+            input("\nPresiona ENTER para volver...")
