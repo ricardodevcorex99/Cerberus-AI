@@ -7,13 +7,17 @@ import time
 # Asegurar que la raíz de Cerberus esté en el PATH
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from flask import Flask, render_template, jsonify
+from flask import Flask, render_template, jsonify, request
 from core.ai_engine import load_env_file
+from core.sentinel import start_sentinel
 
 load_env_file()
 PORT = int(os.getenv("SIEM_PORT", 5050))
 
 app = Flask(__name__, template_folder='../templates')
+
+# Iniciar Centinela en segundo plano
+start_sentinel(interval_sec=8)
 
 @app.after_request
 def after_request(response):
@@ -62,6 +66,15 @@ def api_incidentes():
             except Exception:
                 pass
         return jsonify([])
+
+@app.route('/api/verify', methods=['POST'])
+def api_verify():
+    data = request.get_json(silent=True) or {}
+    text = str(data.get('text', '')).strip()
+    field = str(data.get('field', 'App Input')).strip()
+    from modules.modulo3_firewall import evaluar_payload_firewall
+    res = evaluar_payload_firewall(text, field)
+    return jsonify(res)
 
 def start_flask():
     import logging

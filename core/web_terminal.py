@@ -10,10 +10,14 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from contextlib import redirect_stdout, redirect_stderr
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from core.ai_engine import load_env_file
+from core.sentinel import start_sentinel
 
 load_env_file()
 PORT = int(os.getenv("WEB_TERMINAL_PORT", 5055))
 TEMPLATE_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "templates", "web_terminal.html")
+
+# Iniciar Centinela en segundo plano para escanear MiVeci Atlas continuamente
+start_sentinel(interval_sec=8)
 
 def get_html_content():
     if os.path.exists(TEMPLATE_PATH):
@@ -75,6 +79,26 @@ class TerminalHandler(BaseHTTPRequestHandler):
             output = self.execute_command(cmd)
 
             resp = json.dumps({"output": output}).encode('utf-8')
+            self.send_response(200)
+            self._send_cors()
+            self.send_header('Content-Type', 'application/json')
+            self.send_header('Content-Length', str(len(resp)))
+            self.end_headers()
+            self.wfile.write(resp)
+        elif self.path == '/api/verify':
+            length = int(self.headers.get('Content-Length', 0))
+            body = self.rfile.read(length).decode('utf-8')
+            try:
+                data = json.loads(body)
+                text = str(data.get('text', '')).strip()
+                field = str(data.get('field', 'App Input')).strip()
+            except Exception:
+                text = ''
+                field = 'App Input'
+
+            from modules.modulo3_firewall import evaluar_payload_firewall
+            res = evaluar_payload_firewall(text, field)
+            resp = json.dumps(res).encode('utf-8')
             self.send_response(200)
             self._send_cors()
             self.send_header('Content-Type', 'application/json')

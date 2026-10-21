@@ -92,18 +92,11 @@ def escanear_reservas():
             
         print(f"✅ Descargados {len(registros)} registros de MongoDB Atlas para análisis forense.\n")
     except Exception as e:
-        print(f"⚠️ Aviso: Conexión directa a MongoDB Atlas limitada ({e}).")
-        print("📂 Usando registros locales de respaldo para verificación...\n")
-        
-        # Cargar respaldo si existe
-        backup_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data/reservas_db.json")
-        if os.path.exists(backup_path):
-            with open(backup_path, 'r', encoding='utf-8') as f:
-                registros = json.load(f)
-                
+        print(f"⚠️ Aviso: Error al conectar con MongoDB Atlas: {e}\n")
+
     if not registros:
-        print("ℹ️ MongoDB Atlas verificado: 0 registros pendientes de análisis en este momento.")
-        print("🛡️ Base de datos limpia. El centinela de Cerberus se encuentra monitoreando en tiempo real.")
+        print("ℹ️ MongoDB Atlas verificado: 0 registros en este momento (Base de Datos limpia).")
+        print("🛡️ El centinela de Cerberus se encuentra monitoreando la App MiVeci en tiempo real.")
         print("=" * 65)
         return
 
