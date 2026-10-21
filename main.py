@@ -25,7 +25,7 @@ def main():
         print("\033[1;37mMÓDULOS DE OPERACIÓN:\033[0m\n")
         print("  \033[1;34m[ 1 ]\033[0m 🔍 Auditar código fuente (MiVeci App / GitHub) \033[90m- SAST OWASP Top 10\033[0m")
         print("  \033[1;34m[ 2 ]\033[0m 💾 Escanear MongoDB Atlas (Vendedores vs Compradores) \033[90m- Defensa Activa\033[0m")
-        print("  \033[1;34m[ 3 ]\033[0m 🧱 Probar Firewall Semántico L7 (Prompt Injections) \033[90m- Escudo LLM\033[0m")
+        print("  \033[1;34m[ 3 ]\033[0m 🧱 Probar Firewall de Entradas y Formularios \033[90m- Nombres, Búsquedas y APIs\033[0m")
         print("  \033[1;34m[ 4 ]\033[0m 📊 Ver Registro SIEM Central en Terminal \033[90m- Incidentes & Severidad\033[0m")
         print("  \033[1;34m[ 5 ]\033[0m 🌐 Lanzar Servidor Web SIEM Dashboard \033[90m(Puerto 5050 - Gráficos)\033[0m")
         print("  \033[1;34m[ 6 ]\033[0m 🖥️  Lanzar Terminal Web Embebida \033[90m(Puerto 5055 - Terminal Web Emulator)\033[0m")
