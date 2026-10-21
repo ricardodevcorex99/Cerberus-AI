@@ -765,6 +765,9 @@
                  .replace(/\bCRÍTICO\b/g, '<span class="c-red font-bold">CRÍTICO</span>')
                  .replace(/\bALTO\b/g, '<span class="c-yellow font-bold">ALTO</span>');
 
+            // Hacer los IDs de incidentes clickeables directamente
+            s = s.replace(/\b(INC-\d+)\b/g, '<span class="inc-link" onclick="sendCmd(\'$1\')" title="Clic para ver detalle forense de $1" style="cursor:pointer; text-decoration:underline; text-underline-offset:2px; color:#38bdf8; font-weight:700;">$1</span>');
+
             return s;
         }
 

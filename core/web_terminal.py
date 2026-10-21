@@ -116,6 +116,12 @@ class TerminalHandler(BaseHTTPRequestHandler):
                     from core.dashboard import ver_dashboard
                     ver_dashboard()
 
+                elif cmd.upper().startswith("INC-") or cmd.lower().startswith("inc ") or cmd.lower().startswith("4 inc-"):
+                    from core.dashboard import ver_dashboard
+                    parts = cmd.strip().split()
+                    raw_id = parts[-1] if len(parts) > 1 else parts[0]
+                    ver_dashboard(inc_id=raw_id)
+
                 elif cmd.startswith("test "):
                     payload = cmd[5:].strip()
                     from modules.modulo3_firewall import evaluar_payload_firewall
@@ -134,6 +140,7 @@ class TerminalHandler(BaseHTTPRequestHandler):
                     print("  2        : Escanear MongoDB Atlas (Regla Vendedores vs Compradores)")
                     print("  3        : Firewall de Entradas y Formularios (Tiendas, Compradores y Búsqueda)")
                     print("  4        : Ver registro de incidentes SIEM central")
+                    print("  INC-xxx  : Ver reporte forense detallado (ej. INC-041 o haz clic en la tabla)")
                     print("  test <x> : Evaluar payload libre en vivo con Cerberus")
                     print("  clear    : Limpiar la pantalla de la terminal")
 
@@ -142,7 +149,7 @@ class TerminalHandler(BaseHTTPRequestHandler):
 
                 else:
                     print(f"Comando '{cmd}' no reconocido.")
-                    print("Comandos disponibles: 1 (SAST), 2 (MongoDB), 3 (Firewall Formularios), 4 (SIEM), test <frase>, help, clear")
+                    print("Comandos disponibles: 1 (SAST), 2 (MongoDB), 3 (Firewall Formularios), 4 (SIEM), INC-xxx (Detalle), test <frase>, help, clear")
         except Exception as e:
             print(f"Error durante ejecución: {e}")
 
