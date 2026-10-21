@@ -28,7 +28,7 @@ def main():
         print("  \033[1;34m[ 3 ]\033[0m 🧱 Probar Firewall Semántico L7 (Prompt Injections) \033[90m- Escudo LLM\033[0m")
         print("  \033[1;34m[ 4 ]\033[0m 📊 Ver Registro SIEM Central en Terminal \033[90m- Incidentes & Severidad\033[0m")
         print("  \033[1;34m[ 5 ]\033[0m 🌐 Lanzar Servidor Web SIEM Dashboard \033[90m(Puerto 5050 - Gráficos)\033[0m")
-        print("  \033[1;34m[ 6 ]\033[0m 🖥️  Lanzar Terminal Web Embebida \033[90m(Puerto 5055 - Modo Termux Web)\033[0m")
+        print("  \033[1;34m[ 6 ]\033[0m 🖥️  Lanzar Terminal Web Embebida \033[90m(Puerto 5055 - Terminal Web Emulator)\033[0m")
         print("  \033[1;31m[ 7 ]\033[0m 🚪 Salir de la Suite\n")
         print("\033[1;36m" + "---------------------------------------------------------------------" + "\033[0m")
         

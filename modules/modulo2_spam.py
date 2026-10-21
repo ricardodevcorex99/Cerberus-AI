@@ -102,18 +102,10 @@ def escanear_reservas():
                 registros = json.load(f)
                 
     if not registros:
-        print("ℹ️ Atlas conectado, pero no hay usuarios ni tiendas registradas en MiVeci aún.")
-        print("🧪 Cargando Batería de Cuentas de Prueba para verificar las Reglas de Defensa:")
-        print("   • Compradores: Cero tolerancia (Batman, trolls y personajes bloqueados)")
-        print("   • Vendedores: Tolerancia a nombres creativos, pero bloqueo estricto a palabras soeces\n")
-        registros = [
-            {"_id": "SIM-001", "_tipo": "COMPRADOR", "name": "David Betancourt", "email": "david@miveci.com"},
-            {"_id": "SIM-002", "_tipo": "COMPRADOR", "name": "Batman_DarkKnight", "email": "batman@gotham.city"},
-            {"_id": "SIM-003", "_tipo": "COMPRADOR", "name": "Hacker_Root_Admin", "email": "admin@botnet.org"},
-            {"_id": "SIM-004", "_tipo": "VENDEDOR", "storeName": "El Rinconcito del Sabor de Doña Carmen", "owner": "Carmen P."},
-            {"_id": "SIM-005", "_tipo": "VENDEDOR", "storeName": "La Gran Verga Market", "owner": "Troll"},
-            {"_id": "SIM-006", "_tipo": "COMPRADOR", "name": "Comprador_Test", "query": {"$ne": 1}},
-        ]
+        print("ℹ️ MongoDB Atlas verificado: 0 registros pendientes de análisis en este momento.")
+        print("🛡️ Base de datos limpia. El centinela de Cerberus se encuentra monitoreando en tiempo real.")
+        print("=" * 65)
+        return
 
     amenazas_detectadas = 0
     
