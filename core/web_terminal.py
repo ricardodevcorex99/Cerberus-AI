@@ -113,7 +113,7 @@ class TerminalHandler(BaseHTTPRequestHandler):
                         builtins.input = orig_input
 
                 elif cmd == '3':
-                    print("--- BATERÍA DE PRUEBAS FIREWALL SEMÁNTICO L7 ---")
+                    print("--- DIAGNÓSTICO DE FORMULARIOS Y ENTRADAS (FIREWALL MIVECI) ---")
                     from modules.modulo3_firewall import probar_firewall
                     import builtins
                     orig_input = builtins.input
@@ -150,9 +150,9 @@ class TerminalHandler(BaseHTTPRequestHandler):
                     print("=====================================================================")
                     print("  1        : Auditar código fuente local MiVeci (SAST OWASP Top 10)")
                     print("  2        : Escanear MongoDB Atlas (Regla Vendedores vs Compradores)")
-                    print("  3        : Batería de pruebas Firewall L7 Anti-Prompt Injection")
+                    print("  3        : Firewall de Entradas y Formularios (Tiendas, Compradores y Búsqueda)")
                     print("  4        : Ver registro de incidentes SIEM central")
-                    print("  test <x> : Evaluar payload libre en vivo con Gemini 3.8 Flash")
+                    print("  test <x> : Evaluar payload libre en vivo con Cerberus")
                     print("  clear    : Limpiar la pantalla de la terminal")
 
                 elif cmd.lower() in ['clear', '5']:
@@ -160,7 +160,7 @@ class TerminalHandler(BaseHTTPRequestHandler):
 
                 else:
                     print(f"Comando '{cmd}' no reconocido.")
-                    print("Comandos disponibles: 1 (SAST), 2 (MongoDB), 3 (Firewall L7), 4 (SIEM), test <frase>, help, clear")
+                    print("Comandos disponibles: 1 (SAST), 2 (MongoDB), 3 (Firewall Formularios), 4 (SIEM), test <frase>, help, clear")
         except Exception as e:
             print(f"Error durante ejecución: {e}")
 
